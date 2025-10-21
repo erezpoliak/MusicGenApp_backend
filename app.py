@@ -89,8 +89,9 @@ def generated_to_midi(generated, output_midi):
             if pitch in active_notes:
                 start_time = active_notes[pitch]
                 end_time = curr_time
-                note = pretty_midi.Note(velocity = 75, pitch = pitch, start = start_time, end = end_time)
-                instrument.notes.append(note)
+                if end_time > start_time:
+                    note = pretty_midi.Note(velocity=75, pitch=pitch, start=start_time, end=end_time)
+                    instrument.notes.append(note)
                 del active_notes[pitch]
         else:
             # timeshift event
