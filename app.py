@@ -183,5 +183,6 @@ def welcome():
     return "Welcome to the LSTM Music Generation API! Use the /generate endpoint to generate music."
 
 
+# comment out for deployment
 if __name__ == '__main__':
     app.run()
