@@ -9,7 +9,7 @@ import io
 import time
 
 app = Flask(__name__)
-CORS(app, origins = ['https://poli-musicgen.netlify.app', 'http://localhost:5173/'])
+CORS(app, origins = ['https://poli-musicgen.netlify.app', 'http://localhost:5173'])
 
 vocab = np.load('vocabulary.npz', allow_pickle=True)
 int_to_events = vocab['int_to_events'].item()
