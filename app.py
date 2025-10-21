@@ -177,5 +177,5 @@ def welcome():
 
 
 # comment out for deployment
-if __name__ == '__main__':
-    app.run()
+# if __name__ == '__main__':
+#     app.run()
