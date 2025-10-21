@@ -6,7 +6,6 @@ import tempfile
 import tensorflow as tf
 from keras.models import load_model
 import io
-#########
 import time
 
 app = Flask(__name__)
@@ -16,14 +15,17 @@ vocab = np.load('vocabulary.npz', allow_pickle=True)
 int_to_events = vocab['int_to_events'].item()
 events_to_int = vocab['events_to_int'].item()
 timeshift_event = 'timeshift_10'
+
 NOTE_RANGE = range(21, 109)   # piano notes from A0 to C8
 TIMESHIFT_RES = vocab['timeshift_res'].item()  # 10ms
 SEQ_LEN = 255
 GENERATION_DURATION = 10  # seconds
+TEMP = 0.97
+TOP_K = 40
 
-# temp=1, topk=40
 
 model = load_model('best_model_keras.keras', compile = False)
+
 @tf.function(reduce_retracing=True)
 def fast_predict(input_seq):
     return model(input_seq, training = False)
@@ -61,13 +63,13 @@ def midi_to_events(midi_file):
     events.sort(key = lambda x: x[0])  # sort by time
     prev_time = 0
 
-    for time, event_name in events:
-        time_diff = time - prev_time
+    for event_time, event_name in events:
+        time_diff = event_time - prev_time
         time_diff_ms = int(time_diff * 1000)
         num_timeshifts = min(time_diff_ms // TIMESHIFT_RES, 500)  # dont allow more than 5sec of silence
         event_sequence.extend([events_to_int[timeshift_event]] * num_timeshifts)
         event_sequence.append(events_to_int[event_name])
-        prev_time = time
+        prev_time = event_time
 
     return event_sequence
 
@@ -107,7 +109,7 @@ def generated_to_midi(generated, output_midi):
     pm.instruments.append(instrument)
     pm.write(output_midi)
 
-def topk_with_temperature(last_pos_probs, temperature = 0.97, top_k = 40):
+def topk_with_temperature(last_pos_probs, temperature = TEMP, top_k = TOP_K):
     # Apply temperature
     adjusted_logits = np.log(last_pos_probs + 1e-10) / temperature
     exp_logits = np.exp(adjusted_logits)
@@ -122,9 +124,8 @@ def topk_with_temperature(last_pos_probs, temperature = 0.97, top_k = 40):
 
 @app.route('/generate', methods = ['POST'])
 def generate_midi():
-    ####
     start_time = time.time()
-    ####
+
     if 'midi' not in request.files:
         return jsonify({'error': 'No MIDI file provided'}), 400
     file = request.files['midi']
@@ -136,13 +137,9 @@ def generate_midi():
         event_sequence = midi_to_events(temp_in.name)
         seed = prepare_seed(event_sequence)
         curr_time = 0
-        ######
-        generated_events = []
-        #######
 
         while curr_time < GENERATION_DURATION:
             model_input = np.array(seed)
-            # predictions = model.predict(model_input, verbose = 0)[0]  # shape(seq_len, vocab_size)
             input_tensor = tf.constant(model_input, dtype = tf.int32)
             predictions = fast_predict(input_tensor).numpy()[0]  # shape(seq_len, vocab_size)
             last_prediction = predictions[-1]  # shape(vocab_size,)
@@ -157,16 +154,12 @@ def generate_midi():
 
             # extend user sequence with generated
             event_sequence.append(next_event_int)
-            # generated_events.append(next_event_int)
 
         generated_to_midi(event_sequence, temp_out.name)
-        # generated_to_midi(generated_events, temp_out.name)
         temp_out.seek(0)
         midi_bytes = temp_out.read()
 
-        #######
         print(f"Generation time: {time.time() - start_time} seconds")
-        #######
 
         return send_file(
             io.BytesIO(midi_bytes),
