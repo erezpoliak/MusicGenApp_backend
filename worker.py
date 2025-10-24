@@ -67,8 +67,7 @@ def generate_music(midi_file):
 
     return event_sequence
 
-def worker():
-    print('Worker started, waiting for tasks...')
+def run():
     try:
         while True:
             _, task_data_json = redis_client.blpop([redis_constants.TASK_QUEUE], timeout=0)
@@ -98,4 +97,5 @@ def worker():
         print(f'Worker encountered an error: {err}')
 
 if __name__ == '__main__':
-    worker()
+    print('Worker started, waiting for tasks...')
+    run()
