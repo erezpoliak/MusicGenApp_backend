@@ -100,10 +100,14 @@ def run():
     except Exception as err:
         print(f'Worker encountered an error: {err}')
 
-@app.route('/health', methods=['GET'])
-def health():
-    return 'OK', 200
-
-if __name__ == '__main__':
+def start_worker():
     worker_thread = threading.Thread(target=run, daemon=True)
     worker_thread.start()
+
+@app.before_first_request
+def initialize_worker():
+    start_worker()
+
+@app.route('/', methods=['GET'])
+def health():
+    return 'OK', 200
