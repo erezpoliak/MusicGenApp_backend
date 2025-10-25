@@ -19,16 +19,17 @@ timeshift_event = 'timeshift_10'
 NOTE_RANGE = range(21, 109)   # piano notes from A0 to C8
 TIMESHIFT_RES = vocab['timeshift_res'].item()  # 10ms
 SEQ_LEN = 255
-GENERATION_DURATION = 10  # seconds
+# GENERATION_DURATION = 10  # seconds
+GENERATION_DURATION = 5 # seconds
 TEMP = 0.97
 TOP_K = 40
-
 
 model = load_model('best_model_keras.keras', compile = False)
 
 @tf.function(reduce_retracing=True)
 def fast_predict(input_seq):
     return model(input_seq, training = False)
+
 sample_input = tf.constant(np.zeros((1, SEQ_LEN), dtype = np.int32))
 _ = fast_predict(sample_input)  # warm-up
 
@@ -168,14 +169,11 @@ def generate_midi():
             download_name='generated.mid'
         )
 
-
-
-
 @app.route('/', methods = ['GET'])
 def welcome():
     return "Welcome to the LSTM Music Generation API! Use the /generate endpoint to generate music."
 
 
 # comment out for deployment
-# if __name__ == '__main__':
-#     app.run()
+if __name__ == '__main__':
+    app.run()
