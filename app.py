@@ -20,8 +20,8 @@ NOTE_RANGE = range(21, 109)   # piano notes from A0 to C8
 TIMESHIFT_RES = vocab['timeshift_res'].item()  # 10ms
 SEQ_LEN = 255
 # GENERATION_DURATION = 10  # seconds
-# GENERATION_DURATION = 5 # seconds
-GENERATION_DURATION = 7.5 # seconds
+GENERATION_DURATION = 5 # seconds
+# GENERATION_DURATION = 7.5 # seconds
 TEMP = 0.97
 TOP_K = 40
 
