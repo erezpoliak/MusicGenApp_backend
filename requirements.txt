@@ -5,5 +5,3 @@ flask-cors==6.0.1
 tensorflow==2.16.2
 keras==3.11.3
 gunicorn==23.0.0
-python-dotenv==1.1.1
-redis==7.0.0
