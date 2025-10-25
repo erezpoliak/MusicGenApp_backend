@@ -7,9 +7,15 @@ from flask_cors import CORS
 import json
 import io
 import redis_constants
+import threading
+import worker
 
 app = Flask(__name__)
 CORS(app, origins = ['https://poli-musicgen.netlify.app', 'http://localhost:5173'])
+
+def start_worker():
+    worker.run()
+threading.Thread(target=start_worker, daemon=True).start()
 
 load_dotenv()
 redis_url = os.getenv("REDIS_URL")
