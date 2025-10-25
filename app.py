@@ -72,5 +72,5 @@ def get_result(task_id):
         return jsonify({'error': str(e)}), 500
 
 # comment for deployment
-if __name__ == '__main__':
-    app.run()
+# if __name__ == '__main__':
+#     app.run()

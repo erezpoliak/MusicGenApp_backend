@@ -11,7 +11,10 @@ import io
 import redis_constants
 from midi_fn import midi_to_events, prepare_seed, generated_to_midi
 from vocab_constants import events_to_int, timeshift_event, TIMESHIFT_RES, SEQ_LEN
+from flask import Flask
+import threading
 
+app = Flask(__name__)
 
 load_dotenv()
 redis_url = os.getenv("REDIS_URL")
@@ -97,5 +100,14 @@ def run():
     except Exception as err:
         print(f'Worker encountered an error: {err}')
 
-if __name__ == '__main__':
-    run()
+def start_worker():
+    worker_thread = threading.Thread(target=run, daemon=True)
+    worker_thread.start()
+
+@app.before_first_request
+def initialize_worker():
+    start_worker()
+
+@app.route('/', methods=['GET'])
+def health():
+    return 'OK', 200
