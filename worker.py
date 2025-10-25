@@ -107,3 +107,4 @@ def health():
 if __name__ == '__main__':
     worker_thread = threading.Thread(target=run, daemon=True)
     worker_thread.start()
+    app.run(host='0.0.0.0', port=8080)
