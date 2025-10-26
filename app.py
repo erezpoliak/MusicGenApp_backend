@@ -3,8 +3,7 @@ import pretty_midi
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 import tempfile
-import tensorflow as tf
-from keras.models import load_model
+import onnxruntime as ort
 import io
 import time
 
@@ -19,20 +18,12 @@ timeshift_event = 'timeshift_10'
 NOTE_RANGE = range(21, 109)   # piano notes from A0 to C8
 TIMESHIFT_RES = vocab['timeshift_res'].item()  # 10ms
 SEQ_LEN = 255
-# GENERATION_DURATION = 10  # seconds
-GENERATION_DURATION = 5 # seconds
-# GENERATION_DURATION = 7.5 # seconds
+GENERATION_DURATION = 10  # seconds
 TEMP = 0.97
 TOP_K = 40
 
-model = load_model('best_model_keras.keras', compile = False)
-
-@tf.function(reduce_retracing=True)
-def fast_predict(input_seq):
-    return model(input_seq, training = False)
-
-sample_input = tf.constant(np.zeros((1, SEQ_LEN), dtype = np.int32))
-_ = fast_predict(sample_input)  # warm-up
+session = ort.InferenceSession('lstm_model.onnx')
+input_name = session.get_inputs()[0].name
 
 def prepare_seed(event_seq, seq_len = SEQ_LEN):
     if len(event_seq) < seq_len:
@@ -141,9 +132,8 @@ def generate_midi():
         curr_time = 0
 
         while curr_time < GENERATION_DURATION:
-            model_input = np.array(seed)
-            input_tensor = tf.constant(model_input, dtype = tf.int32)
-            predictions = fast_predict(input_tensor).numpy()[0]  # shape(seq_len, vocab_size)
+            model_input = np.array(seed, dtype=np.float32)
+            predictions = session.run(None, {input_name: model_input})[0][0]  # shape(seq_len, vocab_size)
             last_prediction = predictions[-1]  # shape(vocab_size,)
             next_event_int = topk_with_temperature(last_prediction)
 
